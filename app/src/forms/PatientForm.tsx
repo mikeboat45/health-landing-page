@@ -1,6 +1,9 @@
+import { useState } from 'react'; // New import
 import { useForm } from 'react-hook-form';
 import { supabase } from '../services/supabase.ts';
-import { useFormPersistence } from '../hooks/useFormPersistence.ts'; // New import
+import { useFormPersistence } from '../hooks/useFormPersistence.ts';
+import Modal from '../components/ui/Modal.tsx'; // New import
+import Button from '../components/ui/Button.tsx'; // New import
 
 // Define the interface for the form data
 interface PatientFormData {
@@ -12,40 +15,64 @@ interface PatientFormData {
 }
 
 export default function PatientForm() {
-  const form = useForm<PatientFormData>(); // Get the form object
-  const { register, handleSubmit, formState: { errors } } = form; // Destructure from form object
+  const form = useForm<PatientFormData>();
+  const { register, handleSubmit, formState: { errors }, reset } = form; // Added reset
 
-  const { onSubmitWithPersistence } = useFormPersistence({ // Use the persistence hook
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<'success' | 'error' | null>(null);
+  const [submissionMessage, setSubmissionMessage] = useState('');
+
+  const { onSubmitWithPersistence } = useFormPersistence({
     form,
-    key: 'patientForm', // Unique key for this form's data in localStorage
+    key: 'patientForm',
     clearOnSubmit: true,
   });
 
-  const submitHandler = async (data: PatientFormData) => { // Original submission logic
-    const { data: submission, error } = await supabase
-      .from('patient_submissions')
-      .insert([data]);
+  const submitHandler = async (data: PatientFormData) => {
+    try {
+      const { data: submission, error } = await supabase
+        .from('patient_submissions')
+        .insert([data]);
 
-    if (error) {
-      console.error('Submission failed', error);
-      alert('Submission failed! Check the console for details.');
-      throw error; // Re-throw to prevent clearing localStorage on error
-    } else {
-      console.log('Submission successful', submission);
-      alert('Submission successful!');
+      if (error) {
+        console.error('Submission failed', error);
+        setSubmissionStatus('error');
+        setSubmissionMessage('Submission failed! Please try again. If the problem persists, contact support.');
+        setIsModalOpen(true);
+        throw error; // Re-throw to prevent clearing localStorage on error
+      } else {
+        console.log('Submission successful', submission);
+        setSubmissionStatus('success');
+        setSubmissionMessage('Thank you for your submission! We will contact you shortly.');
+        setIsModalOpen(true);
+        reset(); // Clear form fields after successful submission
+      }
+    } catch (error) {
+      // Error already handled above, but catch block ensures modal opens even if throw is caught elsewhere
+      if (!isModalOpen) { // Only open if not already opened by the error check above
+        setSubmissionStatus('error');
+        setSubmissionMessage('An unexpected error occurred. Please try again.');
+        setIsModalOpen(true);
+      }
     }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSubmissionStatus(null);
+    setSubmissionMessage('');
   };
 
   return (
     <div className="max-w-2xl mx-auto p-8 bg-white rounded-lg shadow-md dark:bg-gray-700">
       <h2 className="text-2xl font-bold mb-6 text-center dark:text-gray-100">Patient Intake Form</h2>
-      <form onSubmit={handleSubmit((data) => onSubmitWithPersistence(data, submitHandler))} className="space-y-6"> {/* Modified onSubmit */}
+      <form onSubmit={handleSubmit((data) => onSubmitWithPersistence(data, submitHandler))} className="space-y-6">
         {/* Full Name */}
         <div>
           <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
           <input
             id="full_name"
-            type="text" // Added type for clarity
+            type="text"
             {...register('full_name', { required: 'Full name is required' })}
             className={`mt-1 block w-full px-3 py-2 bg-white border rounded-md shadow-sm placeholder-gray-400 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-500 dark:text-gray-100
               ${errors.full_name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'}
@@ -135,6 +162,20 @@ export default function PatientForm() {
           </button>
         </div>
       </form>
+
+      {/* Confirmation Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={submissionStatus === 'success' ? 'Submission Successful!' : 'Submission Failed'}
+      >
+        <div className="text-center">
+          <p className={`text-lg ${submissionStatus === 'success' ? 'text-green-600' : 'text-red-600'} dark:${submissionStatus === 'success' ? 'text-green-400' : 'text-red-400'} mb-4`}>
+            {submissionMessage}
+          </p>
+          <Button onClick={closeModal} className="mt-4">Close</Button>
+        </div>
+      </Modal>
     </div>
   );
 }
