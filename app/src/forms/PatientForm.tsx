@@ -1,10 +1,20 @@
 import { useForm } from 'react-hook-form';
-import { supabase } from '../services/supabase';
+import { supabase } from '../services/supabase.ts'; // Updated import
+
+// Define the interface for the form data
+interface PatientFormData {
+  full_name: string;
+  email: string;
+  phone?: string; // Optional
+  date_of_birth: string;
+  reason_for_visit?: string; // Optional
+}
 
 export default function PatientForm() {
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  // Type useForm with the PatientFormData interface
+  const { register, handleSubmit, formState: { errors } } = useForm<PatientFormData>();
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: PatientFormData) => { // Typed 'data' parameter
     const { data: submission, error } = await supabase
       .from('patient_submissions')
       .insert([data]);
@@ -29,7 +39,7 @@ export default function PatientForm() {
             {...register('full_name', { required: 'Full name is required' })}
             className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           />
-          {errors.full_name && <p className="mt-2 text-sm text-red-600">{errors.full_name.message}</p>}
+          {errors.full_name && <p className="mt-2 text-sm text-red-600">{errors.full_name.message}</p>} {/* Fixed */}
         </div>
 
         <div>
@@ -46,7 +56,7 @@ export default function PatientForm() {
             })}
             className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           />
-          {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>}
+          {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>} {/* Fixed */}
         </div>
 
         <div>
@@ -67,14 +77,14 @@ export default function PatientForm() {
             {...register('date_of_birth', { required: 'Date of birth is required' })}
             className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           />
-          {errors.date_of_birth && <p className="mt-2 text-sm text-red-600">{errors.date_of_birth.message}</p>}
+          {errors.date_of_birth && <p className="mt-2 text-sm text-red-600">{errors.date_of_birth.message}</p>} {/* Fixed */}
         </div>
 
         <div>
           <label htmlFor="reason_for_visit" className="block text-sm font-medium text-gray-700">Reason for Visit</label>
           <textarea
             id="reason_for_visit"
-            rows="4"
+            rows={4} // Fixed: changed to number
             {...register('reason_for_visit')}
             className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           ></textarea>
