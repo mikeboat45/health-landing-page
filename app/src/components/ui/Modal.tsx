@@ -12,10 +12,10 @@ export default function Modal({ isOpen, onClose, children, title = 'Modal' }: Mo
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
-      <div className="relative p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div className="relative p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800 dark:border-gray-700">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl dark:text-gray-300 dark:hover:text-gray-100">&times;</button>
         </div>
         <div className="mt-3 text-center">
           {children}

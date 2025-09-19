@@ -1,10 +1,13 @@
 import HomePage from './pages/HomePage.tsx';
+import { ThemeProvider } from './context/ThemeContext.tsx'; // New import
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-100"> {/* Removed flex and justify-center to allow HomePage to take full width */}
-      <HomePage />
-    </div>
+    <ThemeProvider>
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+        <HomePage />
+      </div>
+    </ThemeProvider>
   );
 }
 
