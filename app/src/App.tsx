@@ -1,4 +1,4 @@
-import PatientForm from './forms/PatientForm.jsx';
+import PatientForm from './forms/PatientForm.tsx';
 
 function App() {
   return (
