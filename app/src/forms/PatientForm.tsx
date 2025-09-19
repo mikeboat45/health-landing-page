@@ -1,5 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { supabase } from '../services/supabase.ts';
+import { useFormPersistence } from '../hooks/useFormPersistence.ts'; // New import
 
 // Define the interface for the form data
 interface PatientFormData {
@@ -11,9 +12,16 @@ interface PatientFormData {
 }
 
 export default function PatientForm() {
-  const { register, handleSubmit, formState: { errors } } = useForm<PatientFormData>();
+  const form = useForm<PatientFormData>(); // Get the form object
+  const { register, handleSubmit, formState: { errors } } = form; // Destructure from form object
 
-  const onSubmit = async (data: PatientFormData) => {
+  const { onSubmitWithPersistence } = useFormPersistence({ // Use the persistence hook
+    form,
+    key: 'patientForm', // Unique key for this form's data in localStorage
+    clearOnSubmit: true,
+  });
+
+  const submitHandler = async (data: PatientFormData) => { // Original submission logic
     const { data: submission, error } = await supabase
       .from('patient_submissions')
       .insert([data]);
@@ -21,6 +29,7 @@ export default function PatientForm() {
     if (error) {
       console.error('Submission failed', error);
       alert('Submission failed! Check the console for details.');
+      throw error; // Re-throw to prevent clearing localStorage on error
     } else {
       console.log('Submission successful', submission);
       alert('Submission successful!');
@@ -30,7 +39,7 @@ export default function PatientForm() {
   return (
     <div className="max-w-2xl mx-auto p-8 bg-white rounded-lg shadow-md dark:bg-gray-700">
       <h2 className="text-2xl font-bold mb-6 text-center dark:text-gray-100">Patient Intake Form</h2>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit((data) => onSubmitWithPersistence(data, submitHandler))} className="space-y-6"> {/* Modified onSubmit */}
         {/* Full Name */}
         <div>
           <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
